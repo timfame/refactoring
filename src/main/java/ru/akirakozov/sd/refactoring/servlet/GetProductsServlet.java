@@ -1,43 +1,32 @@
 package ru.akirakozov.sd.refactoring.servlet;
 
-import javax.servlet.http.HttpServlet;
+import ru.akirakozov.sd.refactoring.model.Product;
+import ru.akirakozov.sd.refactoring.service.Service;
+import ru.akirakozov.sd.refactoring.servlet.response.ResponseBuilder;
+import ru.akirakozov.sd.refactoring.servlet.response.ResponseBuilderGetter;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 
 /**
  * @author akirakozov
  */
-public class GetProductsServlet extends HttpServlet {
+public class GetProductsServlet extends ProductsServlet {
+
+    public GetProductsServlet(Service service, ResponseBuilderGetter responseBuilderGetter) {
+        super(service, responseBuilderGetter);
+    }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try {
-            try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-                Statement stmt = c.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT");
-                response.getWriter().println("<html><body>");
+    protected String getResponseBody(HttpServletRequest request) {
+        List<Product> products = service.GetProducts();
 
-                while (rs.next()) {
-                    String  name = rs.getString("name");
-                    int price  = rs.getInt("price");
-                    response.getWriter().println(name + "\t" + price + "</br>");
-                }
-                response.getWriter().println("</body></html>");
+        ResponseBuilder responseBuilder = responseBuilderGetter.getResponseBuilder();
 
-                rs.close();
-                stmt.close();
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        for (Product product : products) {
+            responseBuilder.addLine(product.getName() + "\t" + product.getPrice() + "</br>");
         }
 
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
+        return responseBuilder.build();
     }
 }
