@@ -20,6 +20,10 @@ public class QueryServlet extends ProductsServlet {
     @Override
     protected String getResponseBody(HttpServletRequest request) {
         String commandParameter = request.getParameter("command");
+        if (commandParameter == null) {
+            return "Cannot find command parameter";
+        }
+
         Command command;
         try {
             command = Command.valueOf(commandParameter.toUpperCase());
